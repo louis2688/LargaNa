@@ -9,9 +9,12 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "test": "node test/ride-flow.ts"
+    "typecheck": "tsc -p .",
+    "test": "node --env-file=.env.local test/ride-flow.ts"
   },
   "devDependencies": {
-    "@supabase/supabase-js": "^2.116.0"
+    "@supabase/supabase-js": "^2.116.0",
+    "@types/node": "^22.10.7",
+    "typescript": "^7.0.2"
   }
 }

@@ -1,4 +1,4 @@
-export type { Database, Tables, Enums } from "./database.types";
+export type { Database, Tables, Enums } from "./database.types.ts";
 
 // Ride status vocabulary shared by both apps. The transitions themselves live in SQL
 // (advance_ride / cancel_ride); this is only what the UI needs to render each state.

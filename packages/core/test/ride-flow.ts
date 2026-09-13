@@ -16,11 +16,14 @@ const password = "test-password-1234";
 const SM_CEBU = { lat: 10.3111, lng: 123.9186 };
 const IT_PARK = { lat: 10.33, lng: 123.906 };
 
-const ok = <T>(r: { data: T; error: { message: string } | null }, what: string) => {
+// supabase-js responses are unions of a success branch (error: null) and an error branch;
+// ok() asserts success and returns the success branch's data type.
+type Resp = { data: unknown; error: { message: string } | null };
+const ok = <R extends Resp>(r: R, what: string) => {
   assert.equal(r.error, null, `${what}: ${r.error?.message}`);
-  return r.data as NonNullable<T>;
+  return r.data as Extract<R, { error: null }>["data"];
 };
-const fails = async (p: Promise<{ error: { message: string } | null }>, what: string, includes: string) => {
+const fails = async (p: PromiseLike<{ error: { message: string } | null }>, what: string, includes: string) => {
   const { error } = await p;
   assert.ok(error && error.message.includes(includes), `${what} should fail with "${includes}", got: ${error?.message}`);
 };
@@ -68,7 +71,7 @@ try {
   const go = quote.find((q) => q.tier_id === "go")!;
   assert.equal(go.nearby, 2, "two go drivers nearby");
   assert.ok(go.fare >= 6000 && go.fare % 100 === 0, `go fare is whole pesos above the minimum, got ${go.fare}`);
-  assert.ok(go.eta_s! > 0, "eta computed from nearest driver");
+  assert.ok(go.eta_s! >= 60, "eta from the nearest driver floors at 60 s");
   console.log(`quote: ${go.distance_m} m, ${go.duration_s} s, go=₱${go.fare / 100}, eta ${go.eta_s}s`);
 
   const ride = ok(await riderClient.rpc("request_ride", { tier_id: "go", pickup_lat: SM_CEBU.lat, pickup_lng: SM_CEBU.lng, pickup_address: "SM City Cebu", dropoff_lat: IT_PARK.lat, dropoff_lng: IT_PARK.lng, dropoff_address: "IT Park" }), "request ride");
