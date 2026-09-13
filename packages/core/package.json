@@ -1,0 +1,17 @@
+{
+  "name": "@largana/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "node test/ride-flow.ts"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.116.0"
+  }
+}
