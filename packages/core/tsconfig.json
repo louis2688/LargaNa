@@ -6,7 +6,6 @@
     "moduleResolution": "nodenext",
     "strict": true,
     "noEmit": true,
-    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "types": ["node"]
   },

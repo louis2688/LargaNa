@@ -19,11 +19,12 @@ insert into public.driver_profiles (user_id, status, tier_id, vehicle_make, vehi
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-4000-8000-000000000001","role":"authenticated"}';
 do $$
-declare n int; nb int; r public.rides;
+declare n int; nb int; noeta boolean; r public.rides;
 begin
-  select count(*), min(nearby) into n, nb from public.fare_quote(10.3111, 123.9186, 10.33, 123.906);
+  select count(*), min(nearby), bool_and(eta_s is null) into n, nb, noeta from public.fare_quote(10.3111, 123.9186, 10.33, 123.906);
   assert n = 3, 'three tiers quoted, got ' || n;
   assert nb = 0, 'nobody nearby yet';
+  assert noeta, 'no ETA without drivers';
   r := public.request_ride('go', 10.3111, 123.9186, 'SM City Cebu', 10.33, 123.906, 'IT Park');
   assert r.status = 'no_driver', 'no drivers -> no_driver, got ' || r.status;
 end $$;
@@ -73,6 +74,8 @@ declare rid uuid := current_setting('smoke.ride_id')::uuid; n int; r public.ride
 begin
   select count(*) into n from public.ride_offers where ride_id = rid and response = 'pending';
   assert n = 1, 'driver sees exactly one pending offer, got ' || n;
+  select count(*) into n from public.rides where id = rid;
+  assert n = 1, 'offered driver can read the ride';
   r := public.accept_ride(rid);
   assert r.status = 'accepted' and r.driver_id = '00000000-0000-4000-8000-000000000002', 'accepted by driver 1';
 end $$;

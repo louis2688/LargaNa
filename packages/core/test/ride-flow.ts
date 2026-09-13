@@ -2,7 +2,7 @@
 // Needs SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY. Creates two throwaway users and removes them.
 import assert from "node:assert/strict";
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "../src/database.types.ts";
+import type { Database } from "../src/database.types.js";
 
 const url = process.env.SUPABASE_URL!;
 const anonKey = process.env.SUPABASE_ANON_KEY!;
@@ -58,6 +58,7 @@ try {
   const quoteEmpty = ok(await riderClient.rpc("fare_quote", { pickup_lat: SM_CEBU.lat, pickup_lng: SM_CEBU.lng, dropoff_lat: IT_PARK.lat, dropoff_lng: IT_PARK.lng }), "quote");
   assert.equal(quoteEmpty.length, 3, "three tiers quoted");
   assert.equal(quoteEmpty[0].nearby, 0, "nobody nearby");
+  assert.equal(quoteEmpty[0].eta_s, null, "no ETA without drivers");
   const dead = ok(await riderClient.rpc("request_ride", { tier_id: "go", pickup_lat: SM_CEBU.lat, pickup_lng: SM_CEBU.lng, pickup_address: "SM City Cebu", dropoff_lat: IT_PARK.lat, dropoff_lng: IT_PARK.lng, dropoff_address: "IT Park" }), "request with no drivers");
   assert.equal(dead.status, "no_driver");
 
