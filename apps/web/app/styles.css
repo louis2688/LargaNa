@@ -170,7 +170,7 @@ button, input { font: inherit; }
 .map-label { position: absolute; padding: 6px 8px; background: var(--card); box-shadow: var(--shadow-sm); font-size: 11px; font-weight: 700; }
 .map-label--start { top: 72%; left: 12%; }
 .map-label--end { top: 9%; right: 13%; }
-.map-controls { position: absolute; top: 12px; left: 12px; display: flex; align-items: center; gap: 8px; } /* top-left on phones: top-right is the dropoff label */
+.map-controls { position: absolute; top: 12px; left: 12px; display: flex; align-items: center; gap: 8px; } /* top-left: top-right belongs to the dropoff label */
 .map-trip-detail { position: absolute; right: 12px; bottom: 12px; display: grid; gap: 4px; padding: 10px 12px; background: var(--card); box-shadow: var(--shadow-sm); }
 .map-trip-detail strong { font-size: 13px; }
 .map-trip-detail span { color: var(--muted); font-size: 11px; }
@@ -211,7 +211,7 @@ button, input { font: inherit; }
   .booking-heading p { font-size: 16px; }
   .heading-meta { display: grid; align-items: flex-end; gap: 2px; color: var(--muted); text-align: right; }
   .map-surface { min-height: 320px; }
-  .map-controls { top: 18px; right: 18px; left: auto; }
+  .map-controls { top: 18px; left: 18px; }
   .map-trip-detail { right: 20px; bottom: 20px; padding: 12px 14px; }
   .safety-strip { align-items: center; margin-top: 34px; }
   .confirmation-wrap { padding: 12vh 0; }
