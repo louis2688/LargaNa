@@ -5,7 +5,6 @@
   "scripts": {
     "dev:web": "pnpm --filter @largana/web dev",
     "dev:mobile": "pnpm --filter @largana/mobile start",
-    "build": "pnpm --filter @largana/web build",
-    "lint": "pnpm --filter @largana/web lint"
+    "build": "pnpm --filter @largana/web build"
   }
 }

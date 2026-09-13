@@ -6,8 +6,17 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "ios": { "supportsTablet": true },
-    "android": { "adaptiveIcon": { "backgroundColor": "#166B57" } },
-    "plugins": ["expo-router"]
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#166B57"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ]
   }
 }

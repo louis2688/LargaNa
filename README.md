@@ -2,6 +2,8 @@
 
 LargaNa is a ride-hailing product for the Philippines, with a responsive Next.js rider experience and an Expo-powered mobile app for iOS and Android.
 
+Requires Node 20+ and pnpm 9 (`npm i -g pnpm@9`).
+
 ## Run the web app
 
 ```bash
