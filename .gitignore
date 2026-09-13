@@ -2,6 +2,8 @@ node_modules/
 .next/
 next-env.d.ts
 .expo/
+.vercel/
+.env*.local
 dist/
 *.log
 .DS_Store
