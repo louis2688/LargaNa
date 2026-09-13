@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Bell,
   CarFront,
@@ -8,9 +8,12 @@ import {
   ChevronLeft,
   Clock3,
   MapPin,
+  Menu,
+  Moon,
   Navigation,
   ShieldCheck,
   Star,
+  Sun,
   UsersRound,
   X
 } from "lucide-react";
@@ -31,6 +34,18 @@ function Brand() {
   return <a className="brand" href="#top" aria-label="LargaNa home"><span>Larga</span>Na</a>;
 }
 
+function ThemeToggle() {
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  useEffect(() => { setTheme(document.documentElement.dataset.theme === "dark" ? "dark" : "light"); }, []);
+  const toggle = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("theme", next); } catch {}
+    setTheme(next);
+  };
+  return <Button variant="ghost" size="icon" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} aria-pressed={theme === "dark"} onClick={toggle}>{theme === "dark" ? <Sun size={19} /> : <Moon size={19} />}</Button>;
+}
+
 function LocationField({ label, value, onChange, destination }: { label: string; value: string; onChange: (value: string) => void; destination?: boolean }) {
   const Icon = destination ? MapPin : Navigation;
   return <div className="location-field">
@@ -45,11 +60,12 @@ export default function RideBooking() {
   const [dropoff, setDropoff] = useState("IT Park, Cebu City");
   const [selected, setSelected] = useState("go");
   const [booked, setBooked] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const selectedRide = useMemo(() => rides.find((ride) => ride.id === selected) ?? rides[0], [selected]);
 
   if (booked) {
     return <main className="site-shell confirmation-shell">
-      <header className="site-header"><Brand /><Button variant="ghost" size="icon" aria-label="Back to booking" onClick={() => setBooked(false)}><ChevronLeft size={20} /></Button></header>
+      <header className="site-header"><Brand /><Button variant="ghost" size="icon" aria-label="Back to booking" onClick={() => setBooked(false)}><ChevronLeft size={20} /></Button><div className="header-controls"><ThemeToggle /></div></header>
       <section className="confirmation-wrap" aria-live="polite">
         <Card className="confirmation-card">
           <CardContent className="confirmation-content">
@@ -73,8 +89,13 @@ export default function RideBooking() {
   return <main className="site-shell">
     <header className="site-header">
       <Brand />
-      <nav className="site-nav" aria-label="Primary navigation"><a href="#rides">Book a ride</a><a href="#safety">Safety</a><a href="#support">Support</a></nav>
-      <div className="header-controls"><Button variant="ghost" size="icon" aria-label="Notifications"><Bell size={19} /></Button><Avatar className="profile-avatar" aria-label="Luis profile"><AvatarFallback>LM</AvatarFallback></Avatar></div>
+      <nav className="site-nav" id="primary-nav" data-open={menuOpen} aria-label="Primary navigation" onClick={() => setMenuOpen(false)}><a href="#rides">Book a ride</a><a href="#safety">Safety</a><a href="#support">Support</a></nav>
+      <div className="header-controls">
+        <ThemeToggle />
+        <Button variant="ghost" size="icon" aria-label="Notifications"><Bell size={19} /></Button>
+        <Avatar className="profile-avatar" aria-label="Luis profile"><AvatarFallback>LM</AvatarFallback></Avatar>
+        <Button variant="ghost" size="icon" className="menu-button" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} aria-controls="primary-nav" onClick={() => setMenuOpen((open) => !open)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</Button>
+      </div>
     </header>
 
     <section className="booking-heading" id="top">
