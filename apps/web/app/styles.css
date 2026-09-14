@@ -217,6 +217,28 @@ button, input { font: inherit; }
 .offer-actions { display: flex; gap: 8px; margin-top: 6px; }
 .offer-actions .ui-button { flex: 1; }
 
+/* Ops console */
+.admin-shell { display: grid; gap: 16px; max-width: 1100px; margin: 24px auto 0; }
+.admin-narrow { max-width: 560px; width: 100%; justify-self: center; }
+.admin-grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.kpi { padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); }
+.kpi strong { display: block; font-size: 24px; line-height: 1.1; }
+.kpi span { color: var(--muted); font-size: 12px; }
+.table-wrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table th { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
+.table th, .table td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.table small { color: var(--muted); font-size: 12px; }
+.row-actions { display: flex; gap: 6px; white-space: nowrap; }
+.tiers { display: grid; gap: 14px; }
+.tier-form { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; align-items: end; }
+.tier-name { grid-column: 1 / -1; font-size: 14px; }
+.tier-name small { color: var(--muted); font-weight: 400; }
+.tier-form label { display: grid; gap: 4px; color: var(--muted); font-size: 11px; text-transform: capitalize; }
+.tier-form .ui-input { height: 36px; padding: 0 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); font-size: 14px; }
+.tier-form .switch { display: inline-flex; height: 36px; text-transform: none; font-size: 13px; color: var(--foreground); }
+
 /* Tablet */
 @media (min-width: 640px) {
   .site-shell { padding: 0 24px 36px; }
@@ -250,6 +272,8 @@ button, input { font: inherit; }
   .header-controls { margin-left: 0; }
   .menu-button { display: none; }
   .booking-heading { padding: 54px 0 34px; }
+  .admin-grid { grid-template-columns: 3fr 2fr; }
+  .tier-form { grid-template-columns: repeat(4, 1fr) auto auto; }
   .booking-layout { grid-template-columns: minmax(340px, 470px) 1fr; min-height: 548px; }
   .booking-card { border-radius: 8px 0 0 8px; }
   .map-surface { order: 0; min-height: 548px; border-radius: 0 8px 8px 0; }
