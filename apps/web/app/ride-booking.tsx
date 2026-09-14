@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { ACTIVE_RIDE_STATUSES, RIDE_STATUS_LABEL, formatPeso, type Database, type Tables } from "@largana/core";
+import {
+  ACTIVE_RIDE_STATUSES, DEMO_DROPOFF, DEMO_PICKUP, RIDE_STATUS_LABEL,
+  formatPeso, initials, isActive, km, minutes, riderTripCopy, type Quote, type Ride
+} from "@largana/core";
 import { CarFront, ChevronDown, Clock3, MapPin, Navigation, Search, ShieldCheck, Star, UsersRound, X } from "lucide-react";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -13,19 +16,11 @@ import { SignInForm } from "../components/sign-in-form";
 import { SiteHeader } from "../components/site-header";
 import { supabase } from "../lib/supabase";
 
-// ponytail: fixed Cebu coordinates until Places autocomplete lands; the address text is free-form.
-const PICKUP = { lat: 10.3111, lng: 123.9186 };
-const DROPOFF = { lat: 10.33, lng: 123.906 };
 const TIER_COLOR: Record<string, string> = { go: "amber", plus: "green", van: "blue" };
 
-type Quote = Database["public"]["Functions"]["fare_quote"]["Returns"][number];
-type Ride = Tables<"rides">;
 const loadDriver = (id: string) =>
   supabase.from("driver_profiles").select("plate_number, vehicle_make, vehicle_model, vehicle_color, rating, profiles(full_name)").eq("user_id", id).single();
 type Driver = NonNullable<Awaited<ReturnType<typeof loadDriver>>["data"]>;
-
-const minutes = (seconds: number) => `${Math.max(1, Math.round(seconds / 60))} min`;
-const km = (meters: number) => `${(meters / 1000).toFixed(1)} km`;
 
 function LocationField({ label, value, onChange, destination }: { label: string; value: string; onChange: (value: string) => void; destination?: boolean }) {
   const Icon = destination ? MapPin : Navigation;
@@ -37,8 +32,8 @@ function LocationField({ label, value, onChange, destination }: { label: string;
 }
 
 export default function RideBooking() {
-  const [pickup, setPickup] = useState("SM City Cebu, Cebu City");
-  const [dropoff, setDropoff] = useState("IT Park, Cebu City");
+  const [pickup, setPickup] = useState<string>(DEMO_PICKUP.address);
+  const [dropoff, setDropoff] = useState<string>(DEMO_DROPOFF.address);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [selected, setSelected] = useState("go");
   const [session, setSession] = useState<Session | null>(null);
@@ -53,7 +48,7 @@ export default function RideBooking() {
 
   // Live fares, nearby drivers and ETAs, refreshed every 15 s.
   useEffect(() => {
-    const load = () => supabase.rpc("fare_quote", { pickup_lat: PICKUP.lat, pickup_lng: PICKUP.lng, dropoff_lat: DROPOFF.lat, dropoff_lng: DROPOFF.lng })
+    const load = () => supabase.rpc("fare_quote", { pickup_lat: DEMO_PICKUP.lat, pickup_lng: DEMO_PICKUP.lng, dropoff_lat: DEMO_DROPOFF.lat, dropoff_lng: DEMO_DROPOFF.lng })
       .then(({ data, error }) => { if (error) setError(error.message); else setQuotes(data); });
     load();
     const timer = setInterval(load, 15000);
@@ -96,8 +91,8 @@ export default function RideBooking() {
     setBusy(true);
     setError(null);
     const { data, error } = await supabase.rpc("request_ride", {
-      tier_id: quote.tier_id, pickup_lat: PICKUP.lat, pickup_lng: PICKUP.lng, pickup_address: pickup,
-      dropoff_lat: DROPOFF.lat, dropoff_lng: DROPOFF.lng, dropoff_address: dropoff
+      tier_id: quote.tier_id, pickup_lat: DEMO_PICKUP.lat, pickup_lng: DEMO_PICKUP.lng, pickup_address: pickup,
+      dropoff_lat: DEMO_DROPOFF.lat, dropoff_lng: DEMO_DROPOFF.lng, dropoff_address: dropoff
     });
     setBusy(false);
     if (error) setError(error.message);
@@ -118,19 +113,9 @@ export default function RideBooking() {
 
   if (ride) {
     const status = ride.status;
-    const active = (ACTIVE_RIDE_STATUSES as readonly string[]).includes(status);
+    const active = isActive(status);
     const driverName = driver?.profiles?.full_name ?? "Your driver";
-    const headline = {
-      requested: "Finding your driver…", accepted: `${driverName} is on the way.`, arrived: `${driverName} is outside.`,
-      in_progress: `On the way to ${ride.dropoff_address}.`, completed: "You've arrived.", no_driver: "No drivers available right now.",
-      cancelled_by_rider: "Ride cancelled.", cancelled_by_driver: "Your driver had to cancel."
-    }[status];
-    const copy = {
-      requested: "We're offering your ride to the nearest drivers.", accepted: "We'll let you know when they're outside.",
-      arrived: "Look for the plate number below.", in_progress: `Fare ${formatPeso(ride.quoted_fare)}, cash.`,
-      completed: `${formatPeso(ride.final_fare ?? ride.quoted_fare)} cash. Thanks for riding with LargaNa.`,
-      no_driver: "Try again in a moment or pick another ride type.", cancelled_by_rider: "No charge.", cancelled_by_driver: "No charge. Book again to find another driver."
-    }[status];
+    const { headline, copy } = riderTripCopy(ride, driverName);
     return <main className="site-shell confirmation-shell">
       {header}
       <section className="confirmation-wrap" aria-live="polite">
@@ -143,7 +128,7 @@ export default function RideBooking() {
             {driver && <>
               <Separator />
               <div className="driver-summary">
-                <span className="ui-avatar"><span className="ui-avatar-fallback">{driverName.split(" ").map((w) => w[0]).join("").slice(0, 2)}</span></span>
+                <span className="ui-avatar"><span className="ui-avatar-fallback">{initials(driverName)}</span></span>
                 <div><strong>{driverName}</strong><span>{driver.vehicle_color} {driver.vehicle_make} {driver.vehicle_model} · {driver.plate_number}</span></div>
                 <span className="driver-rating"><Star size={14} fill="currentColor" /> {Number(driver.rating).toFixed(1)}</span>
               </div>

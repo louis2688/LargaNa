@@ -16,7 +16,13 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "LargaNa shares your location with nearby riders while you're online as a driver."
+        }
+      ]
     ]
   }
 }

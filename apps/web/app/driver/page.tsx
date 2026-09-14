@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { RIDE_STATUS_LABEL, formatPeso, type Tables } from "@largana/core";
+import { DEMO_PICKUP, DRIVER_NEXT_STEP, RIDE_STATUS_LABEL, formatPeso, km, type Ride, type Tables } from "@largana/core";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
@@ -10,19 +10,13 @@ import { SignInForm } from "../../components/sign-in-form";
 import { SiteHeader } from "../../components/site-header";
 import { supabase } from "../../lib/supabase";
 
-type Ride = Tables<"rides">;
 type DriverProfile = Tables<"driver_profiles">;
 const loadOffers = (uid: string) => supabase.from("ride_offers").select("*, rides(*)").eq("driver_id", uid).eq("response", "pending");
 type Offer = NonNullable<Awaited<ReturnType<typeof loadOffers>>["data"]>[number];
 type Resp = { data: unknown; error: { message: string } | null };
 
-// ponytail: demo drivers sit at SM City Cebu; tick "Use my GPS" to publish the browser's real position.
-const DEMO_LOCATION = { lat: 10.3111, lng: 123.9186 };
-const NEXT_STEP: Partial<Record<Ride["status"], { to: Ride["status"]; label: string }>> = {
-  accepted: { to: "arrived", label: "I've arrived at the pickup" },
-  arrived: { to: "in_progress", label: "Start trip" },
-  in_progress: { to: "completed", label: "Complete trip" }
-};
+// ponytail: demo drivers sit at the demo pickup; tick "Use my GPS" to publish the browser's real position.
+const DEMO_LOCATION = { lat: DEMO_PICKUP.lat, lng: DEMO_PICKUP.lng };
 
 export default function DriverPage() {
   const [session, setSession] = useState<Session | null>(null);
@@ -113,7 +107,7 @@ export default function DriverPage() {
     if (next) setRide(next);
   };
 
-  const step = ride ? NEXT_STEP[ride.status] : undefined;
+  const step = ride ? DRIVER_NEXT_STEP[ride.status] : undefined;
 
   return <main className="site-shell">
     <SiteHeader session={session} onSignIn={() => {}} onSignOut={() => supabase.auth.signOut()} />
@@ -142,7 +136,7 @@ export default function DriverPage() {
             <Badge variant="secondary">{RIDE_STATUS_LABEL[ride.status]}</Badge>
           </CardHeader>
           <CardContent className="trip-actions">
-            <p className="offer-fare"><strong>{formatPeso(ride.quoted_fare)}</strong> <small>cash · {(ride.distance_m / 1000).toFixed(1)} km</small></p>
+            <p className="offer-fare"><strong>{formatPeso(ride.quoted_fare)}</strong> <small>cash · {km(ride.distance_m)}</small></p>
             {step && <Button className="wide-button" onClick={() => advance(step.to)}>{step.label}</Button>}
             {(ride.status === "accepted" || ride.status === "arrived") && <Button variant="outline" className="wide-button" onClick={cancel}>Cancel ride</Button>}
             {!step && <Button variant="outline" className="wide-button" onClick={() => setRide(null)}>Done</Button>}
@@ -152,7 +146,7 @@ export default function DriverPage() {
           <CardContent>
             {offers.length === 0 ? <p className="form-hint">No offers right now.</p> : <div className="offers">
               {offers.map((offer) => <div key={offer.id} className="offer">
-                <strong>{offer.rides ? formatPeso(offer.rides.quoted_fare) : "New ride"} <small>· {offer.rides ? `${(offer.rides.distance_m / 1000).toFixed(1)} km` : ""}</small></strong>
+                <strong>{offer.rides ? formatPeso(offer.rides.quoted_fare) : "New ride"} <small>· {offer.rides ? km(offer.rides.distance_m) : ""}</small></strong>
                 <small>{offer.rides ? `${offer.rides.pickup_address} → ${offer.rides.dropoff_address}` : "Loading ride…"}</small>
                 <div className="offer-actions"><Button onClick={() => accept(offer)}>Accept</Button><Button variant="outline" onClick={() => decline(offer)}>Decline</Button></div>
               </div>)}

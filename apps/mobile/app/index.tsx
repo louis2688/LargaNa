@@ -1,32 +1,44 @@
-import { useState } from "react";
-import { Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { DriverHome } from "../components/driver-home";
+import { RiderHome } from "../components/rider-home";
+import { SignIn } from "../components/sign-in";
+import { supabase, useSession } from "../lib/supabase";
+import { color, ui } from "../lib/theme";
 
-const rideTypes = [
-  { key: "LargaGo", label: "Everyday rides", price: "P129", eta: "3 min" },
-  { key: "LargaPlus", label: "Extra comfort", price: "P188", eta: "5 min" },
-  { key: "LargaVan", label: "For the whole crew", price: "P268", eta: "8 min" }
-];
+// One app: accounts with a driver profile get the driver screen, everyone else books rides.
+export default function Home() {
+  const session = useSession();
+  const uid = session?.user.id;
+  const [mode, setMode] = useState<{ uid: string; driver: boolean } | null>(null);
 
-export default function HomeScreen() {
-  const [pickup, setPickup] = useState("SM City Cebu");
-  const [dropoff, setDropoff] = useState("IT Park, Cebu City");
-  const [selected, setSelected] = useState(0);
-  const [confirmed, setConfirmed] = useState(false);
-  const ride = rideTypes[selected];
+  useEffect(() => {
+    if (!uid) return;
+    supabase.from("driver_profiles").select("user_id").eq("user_id", uid).maybeSingle()
+      .then(({ data }) => setMode({ uid, driver: !!data }));
+  }, [uid]);
 
-  return <SafeAreaView style={styles.safe}><View style={styles.screen}>
-    <View style={styles.header}><Text style={styles.brand}><Text style={{ color: "#166B57" }}>Larga</Text>Na</Text><Pressable style={styles.profile}><Ionicons name="person-outline" size={19} color="#163230" /></Pressable></View>
-    {confirmed ? <View style={styles.confirm}><View style={styles.check}><Ionicons name="checkmark" size={35} color="#166B57" /></View><Text style={styles.overline}>RIDE CONFIRMED</Text><Text style={styles.confirmTitle}>Juan is on the way.</Text><Text style={styles.confirmCopy}>Your {ride.key} will arrive in about {ride.eta}.</Text><View style={styles.driver}><View style={styles.avatar}><Text style={styles.avatarText}>JD</Text></View><View style={{ flex: 1 }}><Text style={styles.driverName}>Juan Dela Cruz</Text><Text style={styles.driverCar}>Toyota Vios · ABC 1234</Text></View><Text style={styles.rating}>★ 4.9</Text></View><Pressable style={styles.bookButton} onPress={() => setConfirmed(false)}><Text style={styles.bookText}>Back to booking</Text></Pressable></View> : <>
-      <View style={styles.greeting}><Text style={styles.overline}>GOOD AFTERNOON, LUIS</Text><Text style={styles.title}>Where to?</Text></View>
-      <View style={styles.map}><View style={styles.mapRoadOne}/><View style={styles.mapRoadTwo}/><View style={styles.mapRoute}/><View style={[styles.pin, { left: 54, bottom: 72, backgroundColor: "#166B57" }]} /><View style={[styles.pin, { right: 67, top: 54, backgroundColor: "#d75242" }]} /></View>
-      <View style={styles.sheet}><View style={styles.handle}/><View style={styles.inputRow}><View style={styles.dot}/><View style={{ flex: 1 }}><Text style={styles.inputLabel}>PICKUP</Text><TextInput value={pickup} onChangeText={setPickup} style={styles.input}/></View><Ionicons name="navigate-outline" size={18} color="#61716e" /></View><View style={styles.inputRow}><View style={[styles.dot, styles.square]}/><View style={{ flex: 1 }}><Text style={styles.inputLabel}>DROPOFF</Text><TextInput value={dropoff} onChangeText={setDropoff} style={styles.input}/></View><Ionicons name="location-outline" size={19} color="#61716e" /></View>
-        <View style={styles.choose}><Text style={styles.chooseTitle}>Choose a ride</Text><Text style={styles.distance}>2.8 km</Text></View>
-        {rideTypes.map((item, index) => <Pressable key={item.key} style={[styles.ride, selected === index && styles.rideSelected]} onPress={() => setSelected(index)}><View style={styles.car}><Ionicons name="car-sport" size={22} color="white" /></View><View style={{ flex: 1 }}><Text style={styles.rideName}>{item.key}</Text><Text style={styles.rideLabel}>{item.label}</Text></View><View><Text style={styles.price}>{item.price}</Text><Text style={styles.eta}>{item.eta}</Text></View></Pressable>)}
-        <Pressable style={styles.bookButton} onPress={() => setConfirmed(true)}><Text style={styles.bookText}>Book {ride.key} · {ride.price}</Text></Pressable>
-      </View>
-    </>}
-  </View></SafeAreaView>;
+  const loading = session === undefined || (session !== null && mode?.uid !== uid);
+
+  return <SafeAreaView style={ui.safe}>
+    <View style={styles.header}>
+      <Text style={styles.brand}><Text style={{ color: color.primary }}>Larga</Text>Na</Text>
+      {session && <Pressable accessibilityRole="button" accessibilityLabel="Sign out" style={styles.iconButton} onPress={() => supabase.auth.signOut()}>
+        <Ionicons name="log-out-outline" size={19} color={color.text} />
+      </Pressable>}
+    </View>
+    {loading ? <ActivityIndicator style={styles.loading} color={color.primary} />
+      : !session ? <SignIn />
+      : mode?.driver ? <DriverHome uid={session.user.id} />
+      : <RiderHome session={session} />}
+  </SafeAreaView>;
 }
 
-const styles = StyleSheet.create({safe:{flex:1,backgroundColor:"#f8f7f2"},screen:{flex:1,backgroundColor:"#f8f7f2"},header:{height:62,paddingHorizontal:22,flexDirection:"row",alignItems:"center",justifyContent:"space-between"},brand:{fontSize:24,fontWeight:"800",color:"#163230"},profile:{width:37,height:37,alignItems:"center",justifyContent:"center",borderWidth:1,borderColor:"#d9dfd8"},greeting:{paddingHorizontal:22,paddingTop:19,paddingBottom:20},overline:{fontSize:11,fontWeight:"800",letterSpacing:1.2,color:"#166B57"},title:{fontSize:39,fontWeight:"800",color:"#163230",marginTop:7},map:{height:190,backgroundColor:"#d9e7de",overflow:"hidden",position:"relative"},mapRoadOne:{height:18,width:"140%",backgroundColor:"#f8f7f2",position:"absolute",top:58,left:-60,transform:[{rotate:"-19deg"}]},mapRoadTwo:{height:16,width:"140%",backgroundColor:"#f8f7f2",position:"absolute",bottom:38,left:-60,transform:[{rotate:"25deg"}]},mapRoute:{width:210,height:60,borderTopWidth:8,borderRightWidth:8,borderColor:"#e8a624",borderRadius:42,position:"absolute",left:73,top:76,transform:[{rotate:"-15deg"}]},pin:{width:21,height:21,borderRadius:12,borderWidth:3,borderColor:"white",position:"absolute"},sheet:{flex:1,backgroundColor:"#fff",marginTop:-10,borderTopLeftRadius:18,borderTopRightRadius:18,paddingHorizontal:20,paddingTop:12},handle:{height:4,width:37,borderRadius:2,backgroundColor:"#d9dfd8",alignSelf:"center",marginBottom:12},inputRow:{minHeight:52,borderBottomWidth:1,borderColor:"#e4e7e3",flexDirection:"row",alignItems:"center",gap:10},dot:{width:10,height:10,borderRadius:6,borderWidth:2,borderColor:"#166B57"},square:{borderRadius:1,borderColor:"#f2b93f",backgroundColor:"#f2b93f"},inputLabel:{fontSize:9,letterSpacing:1,color:"#61716e",fontWeight:"700"},input:{fontSize:14,color:"#163230",paddingVertical:2},choose:{flexDirection:"row",justifyContent:"space-between",alignItems:"center",marginTop:18,marginBottom:7},chooseTitle:{fontWeight:"800",fontSize:18,color:"#163230"},distance:{fontSize:12,color:"#61716e"},ride:{minHeight:60,padding:8,flexDirection:"row",gap:11,alignItems:"center",borderWidth:1,borderColor:"transparent"},rideSelected:{backgroundColor:"#edf5f1",borderColor:"#166B57"},car:{width:40,height:34,alignItems:"center",justifyContent:"center",backgroundColor:"#e8a624"},rideName:{fontSize:14,fontWeight:"800",color:"#163230"},rideLabel:{fontSize:11,color:"#61716e",marginTop:3},price:{fontSize:14,fontWeight:"800",textAlign:"right",color:"#163230"},eta:{fontSize:11,color:"#61716e",textAlign:"right",marginTop:3},bookButton:{marginTop:14,backgroundColor:"#166B57",height:52,alignItems:"center",justifyContent:"center"},bookText:{color:"white",fontSize:15,fontWeight:"800"},confirm:{flex:1,paddingHorizontal:24,paddingTop:110,alignItems:"center"},check:{width:76,height:76,borderRadius:40,alignItems:"center",justifyContent:"center",backgroundColor:"#e5f1eb",marginBottom:22},confirmTitle:{fontSize:35,fontWeight:"800",color:"#163230",marginTop:8},confirmCopy:{color:"#61716e",fontSize:15,textAlign:"center",lineHeight:22,marginTop:12},driver:{width:"100%",marginTop:30,padding:16,borderWidth:1,borderColor:"#d9dfd8",flexDirection:"row",alignItems:"center",gap:11},avatar:{height:42,width:42,borderRadius:21,backgroundColor:"#f2b93f",alignItems:"center",justifyContent:"center"},avatarText:{fontWeight:"800",color:"#163230"},driverName:{fontWeight:"800",color:"#163230"},driverCar:{fontSize:11,color:"#61716e",marginTop:4},rating:{color:"#bd8212",fontSize:12,fontWeight:"800"}});
+const styles = StyleSheet.create({
+  header: { height: 56, paddingHorizontal: 22, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  brand: { fontSize: 24, fontWeight: "800", color: color.text },
+  iconButton: { width: 40, height: 40, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: color.border, borderRadius: 20 },
+  loading: { marginTop: 80 }
+});
